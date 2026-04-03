@@ -65,8 +65,9 @@ export class ScrapersService {
   ): Promise<{ prices: ScrapedPrice[]; steamIndex: SteamIndex }> {
     this.logger.log(`Fast search for: "${query}" (region: ${cc})`);
 
+    // Always fetch Steam prices in USD for consistent base currency
     const results = await Promise.allSettled([
-      this.steam.search(query, cc),
+      this.steam.search(query, 'us'),
       this.cheapShark.search(query),
     ]);
 
