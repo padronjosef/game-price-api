@@ -6,7 +6,7 @@ Backend service that scrapes and aggregates video game prices from multiple onli
 
 Searches across **Steam**, **CheapShark** (aggregates 20+ stores like GOG, Humble, Fanatical, GreenManGaming, Epic, etc.), and **Instant Gaming** to find and compare game prices in real time.
 
-Results are cached in PostgreSQL and refreshed daily at 1:00 PM COT to avoid unnecessary re-scraping.
+Results are cached in PostgreSQL with a daily cache boundary at 1:00 PM COT — prices scraped after that time are considered fresh, and stale results are re-scraped on demand.
 
 ## Tech Stack
 
@@ -29,11 +29,15 @@ Results are cached in PostgreSQL and refreshed daily at 1:00 PM COT to avoid unn
 
 1. **Fast phase** (~1-2s): Steam API + CheapShark API respond quickly
 2. **Slow phase** (~5-15s): Instant Gaming is scraped via Playwright
-3. Results are sent as SSE events (`fast`, `slow`, `done`) so the frontend can render progressively
+3. Results are sent as SSE events so the frontend can render progressively:
+   - `pending` — signals which slow scrapers are about to run
+   - `fast` — Steam + CheapShark results
+   - `slow` — Instant Gaming results
+   - `done` — all scraping finished
 
 ## Game Type Detection
 
-Games are automatically classified as `game`, `dlc`, or `bundle` using:
+Games are automatically classified as `game`, `dlc`, `bundle`, or `unknown` using:
 - Steam's own type classification
 - Name-based inference for keywords like "bundle", "complete edition", "goty", "season pass", "deluxe edition", etc.
 
@@ -54,6 +58,7 @@ npm run start:dev
 | `DB_USERNAME` | `postgres` | Database user |
 | `DB_PASSWORD` | `postgres` | Database password |
 | `DB_NAME` | `game_prices` | Database name |
+| `DB_SSL` | `false` | Enable SSL for database connection |
 
 ## Related Repos
 
