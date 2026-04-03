@@ -1,52 +1,40 @@
 # Game Price API
 
-Backend service that scrapes and aggregates video game prices from multiple online stores, helping users find the best deals.
-
-## What it does
-
-Searches across **Steam**, **CheapShark** (aggregates 20+ stores like GOG, Humble, Fanatical, GreenManGaming, Epic, etc.), and **Instant Gaming** to find and compare game prices in real time.
-
-Results are cached in PostgreSQL with a daily cache boundary at 1:00 PM COT — prices scraped after that time are considered fresh, and stale results are re-scraped on demand.
+Backend service that scrapes and aggregates video game prices from multiple online stores.
 
 ## Tech Stack
 
-- **NestJS 11** (TypeScript)
-- **PostgreSQL 16** with TypeORM
-- **Playwright** for browser-based scraping (Instant Gaming)
-- **Axios** for API-based scraping (Steam, CheapShark)
+- NestJS 11 (TypeScript)
+- PostgreSQL 16 with TypeORM
+- Playwright (browser-based scraping)
+- Axios + Cheerio (API/HTML scraping)
 
-## API Endpoints
+## Architecture
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/api/search?q=<query>` | Search prices (paginated, cached) |
-| `GET` | `/api/search/stream?q=<query>&cc=<region>` | SSE stream with progressive results |
-| `GET` | `/api/games?q=<query>` | Search games |
-| `GET` | `/api/games/featured` | Featured games from Steam |
-| `GET` | `/api/games/upcoming` | Upcoming and new releases from Steam |
+Internal-only service, not exposed to the internet. Only the Next.js frontend can reach it via Docker's internal network.
 
-### How the stream works
+Scrapers:
+- **Steam** -- official API via Axios
+- **CheapShark** -- aggregates 20+ stores (GOG, Humble, Fanatical, GreenManGaming, Epic, etc.)
+- **Instant Gaming** -- browser-based scraping via Playwright
 
-1. **Fast phase** (~1-2s): Steam API + CheapShark API respond quickly
-2. **Slow phase** (~5-15s): Instant Gaming is scraped via Playwright
-3. Results are sent as SSE events so the frontend can render progressively:
-   - `pending` — signals which slow scrapers are about to run
-   - `fast` — Steam + CheapShark results
-   - `slow` — Instant Gaming results
-   - `done` — all scraping finished
+Results are cached in PostgreSQL with a daily cache boundary at 1:00 PM COT. Stale results are re-scraped on demand.
 
-## Game Type Detection
+## Getting Started
 
-Games are automatically classified as `game`, `dlc`, `bundle`, or `unknown` using:
-- Steam's own type classification
-- Name-based inference for keywords like "bundle", "complete edition", "goty", "season pass", "deluxe edition", etc.
+### Prerequisites
 
-## Setup
+- Docker (runs via `game-price-infra` docker-compose)
+- All 3 repos cloned as siblings in the same parent folder
+
+### Development
 
 ```bash
-npm install
-npm run start:dev
+# From game-price-infra/
+docker compose up
 ```
+
+API available at http://localhost:3002 (dev) or http://localhost:3000 (prod, internal only).
 
 ### Environment Variables
 
@@ -60,17 +48,25 @@ npm run start:dev
 | `DB_NAME` | `game_prices` | Database name |
 | `DB_SSL` | `false` | Enable SSL for database connection |
 
-## Related Repos
+## API Endpoints
 
-This project is part of a multi-repo setup. All three repos are needed to run the full stack:
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/search?q=<query>` | Search prices (paginated, cached) |
+| `GET` | `/api/search/stream?q=<query>&cc=<region>` | SSE stream with progressive results |
+| `GET` | `/api/games?q=<query>` | Search games |
+| `GET` | `/api/games/featured` | Featured games from Steam |
+| `GET` | `/api/games/upcoming` | Upcoming and new releases from Steam |
 
-| Repo | Description |
-|------|-------------|
-| **game-price-api** (this repo) | Backend API |
-| [game-price-web](https://github.com/padronjosef/game-price-web) | Frontend (Next.js) |
-| [game-price-infra](https://github.com/padronjosef/game-price-infra) | Docker Compose and infrastructure |
+### SSE Streaming
 
-> The easiest way to get everything running is via Docker Compose in the [infra repo](https://github.com/padronjosef/game-price-infra). Clone all three repos as siblings and run `docker compose up` from `game-price-infra/`.
+1. **Fast phase** (~1-2s): Steam API + CheapShark respond quickly
+2. **Slow phase** (~5-15s): Instant Gaming scraped via Playwright
+3. Events sent progressively: `pending`, `fast`, `slow`, `done`
+
+### Game Type Detection
+
+Games are classified as `game`, `dlc`, `bundle`, or `unknown` using Steam's type field and name-based inference (keywords like "bundle", "GOTY", "season pass", "deluxe edition").
 
 ## Project Structure
 
@@ -83,4 +79,32 @@ src/
     providers/       # Steam, CheapShark, InstantGaming
     interfaces/      # Shared scraper interfaces
   search/            # Search orchestration and SSE streaming
+  stores/            # Store definitions
 ```
+
+## Testing
+
+170 tests passing.
+
+```bash
+npm run test
+```
+
+## Deployment
+
+GitHub Actions deploys on push to `main` via SSH to EC2. The deploy script rebuilds the Docker container.
+
+### Pre-push Hook
+
+Runs `lint` + `test` + `build` before every push.
+
+## Auto-Versioning
+
+Prefix commit messages with `[major]`, `[minor]`, or `[patch]` to auto-bump the version in package.json via GitHub Actions.
+
+## Related Repos
+
+| Repo | Description |
+|------|-------------|
+| [game-price-web](https://github.com/padronjosef/game-price-web) | Frontend (Next.js) |
+| [game-price-infra](https://github.com/padronjosef/game-price-infra) | Docker Compose and infrastructure |
