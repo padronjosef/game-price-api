@@ -73,7 +73,9 @@ export class SearchController {
 
     // No Steam results — skip slow scrapers since we have no reference data
     if (steamIndex.map.size === 0 && prices.length === 0) {
-      res.write(`data: ${JSON.stringify({ type: 'fast', game, prices: [] })}\n\n`);
+      res.write(
+        `data: ${JSON.stringify({ type: 'fast', game, prices: [] })}\n\n`,
+      );
       res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
       res.end();
       return;

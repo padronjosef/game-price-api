@@ -1,4 +1,4 @@
-# Game Price API
+# Nukaloot API
 
 Backend service that scrapes and aggregates video game prices from multiple online stores.
 
@@ -24,13 +24,13 @@ Results are cached in PostgreSQL with a daily cache boundary at 1:00 PM COT. Sta
 
 ### Prerequisites
 
-- Docker (runs via `game-price-infra` docker-compose)
+- Docker (runs via `nukaloot-infra` docker-compose)
 - All 3 repos cloned as siblings in the same parent folder
 
 ### Development
 
 ```bash
-# From game-price-infra/
+# From nukaloot-infra/
 docker compose up
 ```
 
@@ -106,5 +106,5 @@ Prefix commit messages with `[major]`, `[minor]`, or `[patch]` to auto-bump the 
 
 | Repo | Description |
 |------|-------------|
-| [game-price-web](https://github.com/padronjosef/game-price-web) | Frontend (Next.js) |
-| [game-price-infra](https://github.com/padronjosef/game-price-infra) | Docker Compose and infrastructure |
+| [nukaloot-web](https://github.com/padronjosef/nukaloot-web) | Frontend (Next.js) |
+| [nukaloot-infra](https://github.com/padronjosef/nukaloot-infra) | Docker Compose and infrastructure |

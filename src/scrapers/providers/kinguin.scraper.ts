@@ -45,8 +45,7 @@ export class KinguinScraper implements GameScraper {
       }
 
       const data = await res.json();
-      const products: KinguinProduct[] =
-        data?._embedded?.products || [];
+      const products: KinguinProduct[] = data?._embedded?.products || [];
 
       return products
         .filter(
@@ -63,9 +62,7 @@ export class KinguinScraper implements GameScraper {
             : undefined;
 
           let gameType: 'game' | 'dlc' | 'bundle' | 'other' = 'other';
-          const mpt = (
-            p.attributes?.marketingProductType || ''
-          ).toLowerCase();
+          const mpt = (p.attributes?.marketingProductType || '').toLowerCase();
           const nameLower = p.name.toLowerCase();
           if (mpt.includes('dlc') || nameLower.includes('dlc'))
             gameType = 'dlc';
@@ -91,8 +88,7 @@ export class KinguinScraper implements GameScraper {
             currency: 'EUR',
             productUrl: `https://www.kinguin.net/category/${urlKey}`,
             gameType,
-            imageUrl:
-              p.coverImageUrl || p.hiImageUrl || p.imageUrl || '',
+            imageUrl: p.coverImageUrl || p.hiImageUrl || p.imageUrl || '',
             backgroundUrl: '',
             releaseDate: p.attributes?.releaseDate || '',
           };

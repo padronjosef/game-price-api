@@ -118,7 +118,13 @@ export class GamesController {
   @Get('featured')
   async featured() {
     const cached = getCached<{
-      items: { name: string; appId: number; image: string; finalPrice?: number; discountPercent?: number }[];
+      items: {
+        name: string;
+        appId: number;
+        image: string;
+        finalPrice?: number;
+        discountPercent?: number;
+      }[];
       rateLimited?: boolean;
     }>('featured');
     if (cached) return cached;

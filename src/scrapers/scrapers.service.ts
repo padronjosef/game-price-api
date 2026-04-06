@@ -15,28 +15,78 @@ function normalize(name: string): string {
 
 const REGION_TOKENS = new Set([
   // Regions
-  'global', 'worldwide', 'ww',
-  'europe', 'eu', 'emea',
-  'north america', 'na', 'united states', 'us', 'usa',
-  'latam', 'latin america', 'south america', 'sa',
-  'asia', 'apac', 'sea',
-  'row', 'rest of world',
-  'middle east', 'africa', 'mena',
-  'turkey', 'argentina', 'brazil', 'india', 'russia', 'ru', 'cis', 'ru/cis',
-  'uk', 'australia', 'anz', 'japan', 'jp', 'china', 'cn', 'korea', 'kr',
-  'germany', 'france', 'italy', 'spain',
+  'global',
+  'worldwide',
+  'ww',
+  'europe',
+  'eu',
+  'emea',
+  'north america',
+  'na',
+  'united states',
+  'us',
+  'usa',
+  'latam',
+  'latin america',
+  'south america',
+  'sa',
+  'asia',
+  'apac',
+  'sea',
+  'row',
+  'rest of world',
+  'middle east',
+  'africa',
+  'mena',
+  'turkey',
+  'argentina',
+  'brazil',
+  'india',
+  'russia',
+  'ru',
+  'cis',
+  'ru/cis',
+  'uk',
+  'australia',
+  'anz',
+  'japan',
+  'jp',
+  'china',
+  'cn',
+  'korea',
+  'kr',
+  'germany',
+  'france',
+  'italy',
+  'spain',
   // Platform/format noise
-  'pc', 'steam', 'cd key', 'cdkey', 'key', 'steam key',
-  'xbox live', 'xbox one', 'xbox series x|s', 'xbox series x/s',
-  'windows', 'playstation', 'ps4', 'ps5', 'nintendo switch',
-  'v2', 'v1',
+  'pc',
+  'steam',
+  'cd key',
+  'cdkey',
+  'key',
+  'steam key',
+  'xbox live',
+  'xbox one',
+  'xbox series x|s',
+  'xbox series x/s',
+  'windows',
+  'playstation',
+  'ps4',
+  'ps5',
+  'nintendo switch',
+  'v2',
+  'v1',
 ]);
 
 /** Strip region / platform / format tokens to produce a dedup key */
 function dedupeNormalize(name: string): string {
   let lower = name.toLowerCase();
   // Remove only parenthesized platform/region noise like (Pc), (Xbox One), not game-meaningful content
-  lower = lower.replace(/\((?:pc|xbox[^)]*|ps[45]|windows|nintendo switch)\)/gi, '');
+  lower = lower.replace(
+    /\((?:pc|xbox[^)]*|ps[45]|windows|nintendo switch)\)/gi,
+    '',
+  );
   // Remove known tokens (longest first to avoid partial matches)
   const sorted = [...REGION_TOKENS].sort((a, b) => b.length - a.length);
   for (const token of sorted) {
@@ -158,7 +208,10 @@ export class ScrapersService {
         errors.push({ store: 'Steam', reason: 'No results found' });
       }
     } else {
-      const reason = results[0].reason instanceof Error ? results[0].reason.message : 'Unknown error';
+      const reason =
+        results[0].reason instanceof Error
+          ? results[0].reason.message
+          : 'Unknown error';
       this.logger.warn(`Steam scraper failed: ${reason}`);
       errors.push({ store: 'Steam', reason });
     }
@@ -166,10 +219,15 @@ export class ScrapersService {
     if (results[1].status === 'fulfilled') {
       cheapSharkPrices = results[1].value;
     } else {
-      const reason = results[1].reason instanceof Error ? results[1].reason.message : 'Unknown error';
+      const reason =
+        results[1].reason instanceof Error
+          ? results[1].reason.message
+          : 'Unknown error';
       this.logger.warn(`CheapShark scraper failed: ${reason}`);
       // CheapShark covers multiple stores — mark them all
-      const cheapSharkStores = [...new Set(cheapSharkPrices.map((p) => p.storeName))];
+      const cheapSharkStores = [
+        ...new Set(cheapSharkPrices.map((p) => p.storeName)),
+      ];
       if (cheapSharkStores.length === 0) {
         errors.push({ store: 'CheapShark', reason });
       } else {
@@ -230,7 +288,7 @@ export class ScrapersService {
       | { type: 'scraping-end'; store: string };
 
     const eventQueue: SlowEvent[] = [];
-    // eslint-disable-next-line @typescript-eslint/no-empty-function
+
     let resolve: (value?: unknown) => void = () => {};
     let hasWaiter = false;
 
@@ -268,9 +326,7 @@ export class ScrapersService {
           push({
             type: 'error',
             store: name,
-            reason: reason.includes('Timeout')
-              ? 'Blocked or timeout'
-              : reason,
+            reason: reason.includes('Timeout') ? 'Blocked or timeout' : reason,
           });
         } finally {
           running--;

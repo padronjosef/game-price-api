@@ -52,7 +52,10 @@ export class GamesService {
     });
   }
 
-  async updateFailedStores(gameId: string, errors: { store: string; reason: string }[]) {
+  async updateFailedStores(
+    gameId: string,
+    errors: { store: string; reason: string }[],
+  ) {
     await this.gameRepo.update(gameId, { failedStores: errors });
   }
 

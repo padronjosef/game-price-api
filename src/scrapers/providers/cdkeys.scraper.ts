@@ -36,10 +36,12 @@ export class CDKeysScraper implements GameScraper {
 
       // CDKeys may have redirected to loaded.com — try loading and gracefully
       // return empty results if the site is unreachable or changed.
-      const response = await page.goto(
-        `https://www.cdkeys.com/catalogsearch/result/?q=${encodeURIComponent(query)}`,
-        { waitUntil: 'domcontentloaded', timeout: 30000 },
-      ).catch(() => null);
+      const response = await page
+        .goto(
+          `https://www.cdkeys.com/catalogsearch/result/?q=${encodeURIComponent(query)}`,
+          { waitUntil: 'domcontentloaded', timeout: 30000 },
+        )
+        .catch(() => null);
 
       if (!response || response.status() >= 400) {
         this.logger.warn('CDKeys appears unreachable or returned an error');
@@ -63,11 +65,19 @@ export class CDKeysScraper implements GameScraper {
         }[] = [];
 
         document
-          .querySelectorAll('.product-item, .product-item-info, li.item.product')
+          .querySelectorAll(
+            '.product-item, .product-item-info, li.item.product',
+          )
           .forEach((el) => {
-            const link = el.querySelector('a.product-item-link, a.product-item-photo') as HTMLAnchorElement;
-            const titleEl = el.querySelector('.product-item-link, .product-name');
-            const priceEl = el.querySelector('.price, .special-price .price, [data-price-amount]');
+            const link = el.querySelector(
+              'a.product-item-link, a.product-item-photo',
+            ) as HTMLAnchorElement;
+            const titleEl = el.querySelector(
+              '.product-item-link, .product-name',
+            );
+            const priceEl = el.querySelector(
+              '.price, .special-price .price, [data-price-amount]',
+            );
             const imgEl = el.querySelector('img') as HTMLImageElement;
 
             if (!link || !priceEl) return;

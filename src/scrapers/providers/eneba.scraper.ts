@@ -56,17 +56,14 @@ export class EnebaScraper implements GameScraper {
             Object.values(h.translations || {})[0]?.name ||
             h.slug;
           const priceUsd = (h.lowestPrice?.USD || 0) / 100;
-          const originalPriceUsd = h.msrp?.USD
-            ? h.msrp.USD / 100
-            : undefined;
+          const originalPriceUsd = h.msrp?.USD ? h.msrp.USD / 100 : undefined;
 
           let gameType: 'game' | 'dlc' | 'bundle' | 'other' = 'other';
           const pt = h.productType?.toLowerCase() || '';
           if (pt.includes('dlc')) gameType = 'dlc';
           else if (pt.includes('bundle') || pt.includes('pack'))
             gameType = 'bundle';
-          else if (pt.includes('game') || pt.includes('key'))
-            gameType = 'game';
+          else if (pt.includes('game') || pt.includes('key')) gameType = 'game';
 
           return {
             storeName: this.storeName,
