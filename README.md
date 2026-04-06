@@ -19,7 +19,7 @@ Scrapers:
 - **Eneba** -- Algolia API
 - **G2A** -- REST API
 - **Kinguin** -- REST API
-- **CDKeys** -- browser-based scraping via Playwright
+- **Loaded** -- browser-based scraping via Playwright
 - **Instant Gaming** -- browser-based scraping via Playwright
 
 Results are cached in PostgreSQL with a daily cache boundary at 1:00 PM COT. Stale results are re-scraped on demand.
@@ -60,17 +60,19 @@ API available at http://localhost:3002 (dev) or http://localhost:3000 (prod, int
 | `GET` | `/api/search/stream?q=<query>&cc=<region>` | SSE stream with progressive results |
 | `GET` | `/api/games?q=<query>` | Search games |
 | `GET` | `/api/games/featured` | Featured games from Steam |
+| `GET` | `/api/games/top-sellers` | Top selling games from Steam |
 | `GET` | `/api/games/upcoming` | Upcoming and new releases from Steam |
+| `GET` | `/api/version` | Returns API version from package.json |
 
 ### SSE Streaming
 
-1. **Fast phase** (~1-2s): Steam API + CheapShark respond quickly
-2. **Slow phase** (~5-15s): Instant Gaming scraped via Playwright
-3. Events sent progressively: `pending`, `fast`, `slow`, `done`
+1. **Fast phase** (~1-2s): Steam API + CheapShark + Kinguin respond quickly
+2. **Slow phase** (~5-15s): Instant Gaming, Eneba, G2A, Loaded scraped via Playwright
+3. Events sent progressively: `pending`, `fast`, `slow`, `scraper-error`, `done`
 
 ### Game Type Detection
 
-Games are classified as `game`, `dlc`, `bundle`, or `unknown` using Steam's type field and name-based inference (keywords like "bundle", "GOTY", "season pass", "deluxe edition").
+Games are classified as `game`, `dlc`, `bundle`, or `other` using Steam's type field and name-based inference (keywords like "bundle", "GOTY", "season pass", "deluxe edition"). Console-only listings are filtered out, and results with invalid product URLs (404, not-found, malformed) are excluded.
 
 ## Project Structure
 
@@ -80,7 +82,7 @@ src/
   games/             # Games module (featured, upcoming, search)
   prices/            # Price caching and persistence
   scrapers/
-    providers/       # Steam, CheapShark, Eneba, G2A, Kinguin, CDKeys, InstantGaming
+    providers/       # Steam, CheapShark, Eneba, G2A, Kinguin, Loaded, InstantGaming
     interfaces/      # Shared scraper interfaces
   search/            # Search orchestration and SSE streaming
   stores/            # Store definitions
@@ -96,15 +98,21 @@ npm run test
 
 ## Deployment
 
-GitHub Actions deploys on push to `main` via SSH to EC2. The deploy script rebuilds the Docker container.
+GitHub Actions on push to `main` using native ARM runners (`ubuntu-24.04-arm`):
+1. Runs `scripts/bump-version.sh` (if commit has version prefix)
+2. Builds and pushes Docker image to GHCR
+3. SSH into EC2 and runs `deploy.sh api`
+4. If version was bumped: pushes version commit and creates GitHub Release with changelog
+
+Job timeout: 8 minutes.
 
 ### Pre-push Hook
 
 Runs `lint` + `test` + `build` before every push.
 
-## Auto-Versioning
+### Commit-msg Hook
 
-Prefix commit messages with `[major]`, `[minor]`, or `[patch]` to auto-bump the version in package.json via GitHub Actions.
+Enforces `[major]`, `[minor]`, or `[patch]` prefix on commit messages.
 
 ## Related Repos
 
